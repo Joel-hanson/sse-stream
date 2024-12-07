@@ -7,6 +7,10 @@ This is a simple Flask-based web application that demonstrates Server-Sent Event
 - Server-Sent Events (SSE) for continuous data streaming
 - Simple web dashboard to visualize system resources
 
+<div align="center">
+<img width="787" alt="Screenshot 2024-12-07 at 9 45 48 PM" src="https://github.com/user-attachments/assets/fd399146-7210-4c12-905f-3a40de8d4134">
+</div>
+
 ## Prerequisites
 
 - Python 3.8+
