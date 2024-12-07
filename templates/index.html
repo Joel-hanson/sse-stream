@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Performance Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet" />
+    <style>
+      :root {
+        --background: 0 0% 100%;
+        --foreground: 240 10% 3.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 3.9%;
+        --primary: 240 5.9% 10%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 240 4.8% 95.9%;
+        --secondary-foreground: 240 5.9% 10%;
+        --muted: 240 4.8% 95.9%;
+        --muted-foreground: 240 3.8% 46.1%;
+        --accent: 240 4.8% 95.9%;
+        --accent-foreground: 240 5.9% 10%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 5.9% 90%;
+        --input: 240 5.9% 90%;
+        --ring: 240 5.9% 10%;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        line-height: 1.5;
+        color: hsl(var(--foreground));
+        background-color: white;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        transition: background-color 0.5s ease;
+      }
+
+      .dashboard {
+        width: 100%;
+        max-width: 400px;
+        background-color: hsl(var(--card));
+        border-radius: 0.75rem;
+        border: 1px solid hsl(var(--border));
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        overflow: hidden;
+      }
+
+      .dashboard-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-bottom: 1px solid hsl(var(--border));
+      }
+
+      .dashboard-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+
+      .dashboard-content {
+        padding: 1rem;
+      }
+
+      .stat-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        margin-top: 1rem;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background-color: hsl(var(--secondary));
+      }
+
+      .stat-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: hsl(var(--muted-foreground));
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .stat-progress {
+        width: 100px;
+        height: 6px;
+        background-color: white;
+        border-radius: 9999px;
+        overflow: hidden;
+      }
+
+      .stat-progress-fill {
+        height: 100%;
+        background-color: hsl(var(--primary));
+        border-radius: 9999px;
+        transition: width 0.5s ease;
+      }
+
+      .high-usage {
+        background-color: hsl(var(--destructive) / 0.1);
+      }
+
+      .high-usage .stat-progress-fill {
+        background-color: hsl(var(--destructive));
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <!-- <div class="dashboard-header">
+        <h2>System Performance</h2>
+        <span id="timestamp">Last Updated: --</span>
+      </div> -->
+      <div class="dashboard-content">
+        <div class="stat-card" id="cpu-card">
+          <div class="stat-info">
+            <div class="stat-label">CPU Usage</div>
+            <div class="stat-value" id="cpu-value">--%</div>
+          </div>
+          <div class="stat-progress">
+            <div class="stat-progress-fill" id="cpu-progress"></div>
+          </div>
+        </div>
+        <div class="stat-card" id="ram-card">
+          <div class="stat-info">
+            <div class="stat-label">RAM Usage</div>
+            <div class="stat-value" id="ram-value">--%</div>
+          </div>
+          <div class="stat-progress">
+            <div class="stat-progress-fill" id="ram-progress"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const eventSource = new EventSource("/stream");
+
+      function updateTimestamp() {
+        const now = new Date();
+        document.getElementById(
+          "timestamp"
+        ).textContent = `Last Updated: ${now.toLocaleTimeString()}`;
+      }
+
+      eventSource.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        const cpuUsage = data.cpu;
+        const ramUsage = data.ram;
+
+        // Calculate average usage
+        const avgUsage = (cpuUsage + ramUsage) / 2;
+
+        // Interpolate between white and rose color
+        const roseColor = {
+          r: 136,
+          g: 19,
+          b: 55
+        };
+
+        const r = Math.round(255 + (roseColor.r - 255) * (avgUsage / 100));
+        const g = Math.round(255 + (roseColor.g - 255) * (avgUsage / 100));
+        const b = Math.round(255 + (roseColor.b - 255) * (avgUsage / 100));
+
+        document.body.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+        // Update values
+        document.getElementById("cpu-value").textContent = `${cpuUsage}%`;
+        document.getElementById("ram-value").textContent = `${ramUsage}%`;
+
+        // Update progress bars
+        document.getElementById("cpu-progress").style.width = `${cpuUsage}%`;
+        document.getElementById("ram-progress").style.width = `${ramUsage}%`;
+
+        // Toggle high usage styles
+        document
+          .getElementById("cpu-card")
+          .classList.toggle("high-usage", cpuUsage > 70);
+        document
+          .getElementById("ram-card")
+          .classList.toggle("high-usage", ramUsage > 70);
+
+        // Update timestamp
+        updateTimestamp();
+      };
+
+      eventSource.onerror = function () {
+        console.error("Error connecting to the SSE stream.");
+      };
+    </script>
+  </body>
+</html>
